@@ -91,9 +91,7 @@ class GlowController {
       _ = state.activeGlowColors
     } onChange: {
       Task { @MainActor in
-        if self.state.previewGlowColor == nil {
-          self.handleColorChange(self.state.activeGlowColors)
-        }
+        self.handleColorChange(self.state.activeGlowColors)
         self.observeColors()
       }
     }

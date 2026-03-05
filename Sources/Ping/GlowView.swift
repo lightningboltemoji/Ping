@@ -11,23 +11,18 @@ import QuartzCore
 class GlowView: NSView, @preconcurrency CAAnimationDelegate {
   private var glowLayer: CAGradientLayer!
 
-  // Color cycling: queue ordered by priority (front = show next, LRU)
-  private var colorQueue: [NSColor] = []
-  private var currentColor: NSColor?
-  private var isAnimating = false
-
-  // Preview state
+  private var rotator = ColorRotator()
   private var previewColor: NSColor?
-  private var savedColorQueue: [NSColor]?
-  private var savedCurrentColor: NSColor?
+  private var displayedColor: NSColor?
 
   private enum AnimationPhase {
+    case idle
     case fadeIn
     case fadeOut
     case crossfade
   }
 
-  private var phase: AnimationPhase = .fadeIn
+  private var phase: AnimationPhase = .idle
 
   private let minOpacity: Float = 0.25
   private let maxOpacity: Float = 0.95
@@ -55,79 +50,45 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
   /// Update the set of colors to cycle through without interrupting the current animation.
   /// New colors are prioritized (shown next), existing colors maintain LRU order.
   func updateAvailableColors(_ newColors: [NSColor]) {
-    guard previewColor == nil else {
-      // During preview, just save the updated pool for when preview ends
-      savedCurrentColor = pickSavedCurrent(from: newColors)
-      savedColorQueue = buildUpdatedQueue(
-        newColors: newColors, excluding: savedCurrentColor)
+    let wasEmpty = rotator.isEmpty
+    rotator.setAvailable(newColors)
+
+    // During preview, rotator is silently updated but we don't touch animation
+    if previewColor != nil { return }
+
+    if rotator.isEmpty {
+      // All colors removed — fade out or go idle
+      if phase != .idle {
+        displayedColor = nil
+        phase = .idle
+        glowLayer?.removeAllAnimations()
+      }
       return
     }
 
-    let allCurrent = ([currentColor].compactMap { $0 }) + colorQueue
-    let sameSet =
-      allCurrent.count == newColors.count
-      && newColors.allSatisfy({ nc in
-        allCurrent.contains(where: { colorsEqual($0, nc) })
-      })
-    if sameSet { return }
-
-    if !isAnimating || currentColor == nil {
-      // Not animating yet — start fresh
-      currentColor = newColors.first
-      colorQueue = Array(newColors.dropFirst())
-      if let current = currentColor {
-        applyColor(current)
+    if wasEmpty || phase == .idle {
+      // Start fresh
+      displayedColor = rotator.currentColor
+      if let color = displayedColor {
+        applyColor(color)
         startFadeIn()
       }
       return
     }
 
-    // Build new queue preserving LRU ordering
-    var newQueue: [NSColor] = []
-
-    // Brand new colors go to front (never shown = highest priority)
-    let allKnown = allCurrent
-    for color in newColors {
-      if !allKnown.contains(where: { colorsEqual($0, color) }) {
-        newQueue.append(color)
-      }
-    }
-
-    // Existing queue colors that are still available keep their order
-    for color in colorQueue {
-      if newColors.contains(where: { colorsEqual($0, color) }) {
-        newQueue.append(color)
-      }
-    }
-
-    colorQueue = newQueue
-
-    if newColors.isEmpty {
-      isAnimating = false
-      glowLayer?.removeAllAnimations()
-      currentColor = nil
-      colorQueue = []
-    } else if let current = currentColor,
-      !newColors.contains(where: { colorsEqual($0, current) })
+    // If displayed color was removed from the set, accelerate fade-out
+    if let displayed = displayedColor,
+      let current = rotator.currentColor,
+      !colorsEqual(displayed, current)
     {
-      // Current color was removed — ensure queue has a next color, then
-      // accelerate the fade-out so stale color doesn't linger
-      if colorQueue.isEmpty, let first = newColors.first {
-        colorQueue = [first]
-      }
       accelerateTransitionAway()
     }
   }
 
   /// Show a preview color, interrupting normal cycling.
   func setPreviewColor(_ color: NSColor) {
-    if previewColor == nil {
-      savedColorQueue = colorQueue
-      savedCurrentColor = currentColor
-    }
     previewColor = color
-    currentColor = color
-    colorQueue = []
+    displayedColor = color
     applyColor(color)
     startFadeIn()
   }
@@ -137,15 +98,13 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
     guard previewColor != nil else { return }
     previewColor = nil
 
-    if let saved = savedCurrentColor {
-      currentColor = saved
-      colorQueue = savedColorQueue ?? []
-      savedColorQueue = nil
-      savedCurrentColor = nil
-      applyColor(saved)
+    if let color = rotator.currentColor {
+      displayedColor = color
+      applyColor(color)
       startFadeIn()
     } else {
-      isAnimating = false
+      displayedColor = nil
+      phase = .idle
       glowLayer?.removeAllAnimations()
     }
   }
@@ -160,34 +119,6 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
       && abs(a.greenComponent - b.greenComponent) < 0.01
       && abs(a.blueComponent - b.blueComponent) < 0.01
       && abs(a.alphaComponent - b.alphaComponent) < 0.01
-  }
-
-  private func nextColor() -> NSColor? {
-    guard !colorQueue.isEmpty else { return nil }
-    let next = colorQueue.removeFirst()
-    if let current = currentColor {
-      colorQueue.append(current)
-    }
-    return next
-  }
-
-  private func pickSavedCurrent(from newColors: [NSColor]) -> NSColor? {
-    // Keep saved current if still available, otherwise pick first new color
-    if let saved = savedCurrentColor,
-      newColors.contains(where: { colorsEqual($0, saved) })
-    {
-      return saved
-    }
-    return newColors.first
-  }
-
-  private func buildUpdatedQueue(newColors: [NSColor], excluding: NSColor?)
-    -> [NSColor]
-  {
-    newColors.filter { nc in
-      if let ex = excluding, colorsEqual(nc, ex) { return false }
-      return true
-    }
   }
 
   // MARK: - Gradient
@@ -225,7 +156,6 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
 
   private func startFadeIn() {
     phase = .fadeIn
-    isAnimating = true
     glowLayer?.removeAllAnimations()
 
     glowLayer.opacity = maxOpacity
@@ -258,7 +188,7 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
   private func startCrossfade(to color: NSColor) {
     phase = .crossfade
     let oldColors = glowLayer.colors
-    currentColor = color
+    displayedColor = color
     let newColors = gradientColors(for: color)
 
     glowLayer.colors = newColors
@@ -300,12 +230,24 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
     guard flag else { return }
 
     switch phase {
+    case .idle:
+      break
     case .fadeIn:
       startFadeOut()
     case .fadeOut:
-      if let next = nextColor() {
+      if previewColor != nil {
+        // Pulsing in preview mode
+        startFadeIn()
+      } else if rotator.isEmpty {
+        phase = .idle
+      } else if let next = rotator.next(),
+        let displayed = displayedColor,
+        !colorsEqual(next, displayed)
+      {
         startCrossfade(to: next)
       } else {
+        // Single color or same color — just pulse
+        displayedColor = rotator.currentColor
         startFadeIn()
       }
     case .crossfade:

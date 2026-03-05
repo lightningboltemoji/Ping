@@ -66,9 +66,8 @@ class DockPoller {
     var colors: [NSColor] = []
     for app in state.apps {
       if let dockItem = dockItems.first(where: { $0.title == app.name }) {
-        let badge = dockItem.badgeCount()
-        if badge != nil {
-          colors.append(AppState.nsColor(forName: app.color))
+        if let badge = dockItem.badgeCount() {
+          colors.append(AppState.resolvedColor(for: app, badge: badge))
         }
       }
     }

@@ -61,7 +61,7 @@ struct AppCardView: View {
       // Identity row
       HStack(spacing: 8) {
         Circle()
-          .fill(Color(nsColor: AppState.nsColor(forName: app.color)))
+          .fill(Color(nsColor: AppState.resolvedColor(for: app, badge: "")))
           .frame(width: 12, height: 12)
 
         Picker("App", selection: $app.name) {
@@ -128,6 +128,78 @@ struct AppCardView: View {
       }
       .padding(.horizontal, 12)
       .padding(.vertical, 8)
+
+      Divider().padding(.leading, 12)
+
+      // Opacity row
+      HStack(spacing: 8) {
+        Text("Opacity")
+          .foregroundStyle(.secondary)
+        Slider(value: $app.opacity, in: 0.1...1.0, step: 0.05)
+        Text("\(Int(app.opacity * 100))%")
+          .monospacedDigit()
+          .frame(width: 40, alignment: .trailing)
+      }
+      .padding(.horizontal, 12)
+      .padding(.vertical, 8)
+
+      Divider().padding(.leading, 12)
+
+      // Per-type colors toggle
+      HStack {
+        Toggle("Color per notification type", isOn: $app.usePerTypeColors)
+      }
+      .padding(.horizontal, 12)
+      .padding(.vertical, 8)
+
+      if app.usePerTypeColors {
+        Divider().padding(.leading, 12)
+
+        // Numeric / Non-numeric color pickers
+        HStack(spacing: 8) {
+          Text("Numeric")
+            .foregroundStyle(.secondary)
+          Spacer()
+          Picker("Numeric", selection: $app.numericColor) {
+            ForEach(AppState.colorPalette, id: \.name) { entry in
+              HStack {
+                Circle()
+                  .fill(Color(nsColor: entry.color))
+                  .frame(width: 10, height: 10)
+                Text(entry.name)
+              }
+              .tag(entry.name)
+            }
+          }
+          .labelsHidden()
+          .frame(width: 110)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+
+        Divider().padding(.leading, 12)
+
+        HStack(spacing: 8) {
+          Text("Non-numeric")
+            .foregroundStyle(.secondary)
+          Spacer()
+          Picker("Non-numeric", selection: $app.nonNumericColor) {
+            ForEach(AppState.colorPalette, id: \.name) { entry in
+              HStack {
+                Circle()
+                  .fill(Color(nsColor: entry.color))
+                  .frame(width: 10, height: 10)
+                Text(entry.name)
+              }
+              .tag(entry.name)
+            }
+          }
+          .labelsHidden()
+          .frame(width: 110)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+      }
     }
     .background(.background.secondary)
     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -245,7 +317,7 @@ struct SettingsView: View {
                 },
                 onHover: { hovering in
                   if hovering {
-                    state.previewGlowColor = AppState.nsColor(forName: app.color)
+                    state.previewGlowColor = AppState.resolvedColor(for: app, badge: "")
                   } else {
                     state.previewGlowColor = nil
                   }

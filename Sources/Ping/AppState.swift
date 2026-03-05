@@ -11,6 +11,10 @@ struct AppSettings: Codable, Identifiable {
   var color: String
   var position: GlowPosition = .top
   var size: Double = 0.25
+  var opacity: Double = 0.9
+  var usePerTypeColors: Bool = false
+  var numericColor: String = "Green"
+  var nonNumericColor: String = "Green"
 }
 
 @Observable
@@ -30,6 +34,16 @@ class AppState {
   static func nsColor(forName name: String) -> NSColor {
     colorPalette.first(where: { $0.name.lowercased() == name.lowercased() })?.color
       ?? NSColor(red: 0.0, green: 0.8, blue: 0.2, alpha: 0.9)
+  }
+
+  static func resolvedColor(for app: AppSettings, badge: String) -> NSColor {
+    let name: String
+    if app.usePerTypeColors {
+      name = !badge.isEmpty ? app.numericColor : app.nonNumericColor
+    } else {
+      name = app.color
+    }
+    return nsColor(forName: name).withAlphaComponent(app.opacity)
   }
 
   var launchOnStartup = true
