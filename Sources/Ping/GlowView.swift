@@ -30,7 +30,7 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
   private var minOpacity: Float { baseMinOpacity * opacityMultiplier }
   private var maxOpacity: Float { baseMaxOpacity * opacityMultiplier }
   private let fadeDuration: CFTimeInterval = 2.0
-  private let crossfadeDuration: CFTimeInterval = 0.6
+  private let crossfadeDuration: CFTimeInterval = 0.4
 
   override init(frame frameRect: NSRect) {
     super.init(frame: frameRect)
@@ -182,20 +182,27 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
   private func startCrossfade(to config: GlowConfig) {
     phase = .crossfade
     let oldColors = glowLayer.colors
+    let oldEndPoint = glowLayer.endPoint
     displayedConfig = config
     let newColors = gradientColors(for: config.color)
 
-    glowLayer.colors = newColors
     applyConfig(config)
 
-    let anim = CABasicAnimation(keyPath: "colors")
-    anim.fromValue = oldColors
-    anim.toValue = newColors
-    anim.duration = crossfadeDuration
-    anim.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-    anim.delegate = self
+    let colorsAnim = CABasicAnimation(keyPath: "colors")
+    colorsAnim.fromValue = oldColors
+    colorsAnim.toValue = newColors
 
-    glowLayer.add(anim, forKey: "glowAnimation")
+    let endPointAnim = CABasicAnimation(keyPath: "endPoint")
+    endPointAnim.fromValue = oldEndPoint
+    endPointAnim.toValue = glowLayer.endPoint
+
+    let group = CAAnimationGroup()
+    group.animations = [colorsAnim, endPointAnim]
+    group.duration = crossfadeDuration
+    group.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+    group.delegate = self
+
+    glowLayer.add(group, forKey: "glowAnimation")
   }
 
   private func accelerateTransitionAway() {
