@@ -24,8 +24,11 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
 
   private var phase: AnimationPhase = .idle
 
-  private let minOpacity: Float = 0.25
-  private let maxOpacity: Float = 0.95
+  private let baseMinOpacity: Float = 0.25
+  private let baseMaxOpacity: Float = 0.95
+  private var opacityMultiplier: Float = 1.0
+  private var minOpacity: Float { baseMinOpacity * opacityMultiplier }
+  private var maxOpacity: Float { baseMaxOpacity * opacityMultiplier }
   private let fadeDuration: CFTimeInterval = 2.0
   private let crossfadeDuration: CFTimeInterval = 0.6
 
@@ -120,6 +123,7 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
   }
 
   private func applyConfig(_ config: GlowConfig) {
+    opacityMultiplier = Float(config.opacity)
     glowLayer.colors = gradientColors(for: config.color)
     let s = CGFloat(config.size)
     glowLayer.locations = [0.0, 0.85, 1.0]

@@ -47,7 +47,7 @@ class AppState {
   }
 
   static func resolvedConfig(for app: AppSettings, badge: String) -> GlowConfig {
-    GlowConfig(color: resolvedColor(for: app, badge: badge), size: app.size)
+    GlowConfig(color: resolvedColor(for: app, badge: badge), size: app.size, opacity: app.opacity)
   }
 
   var launchOnStartup = true
