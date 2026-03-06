@@ -5,6 +5,10 @@ enum GlowPosition: String, Codable, CaseIterable {
   case top, bottom, left, right
 }
 
+enum ColorOptions: String, Codable, CaseIterable {
+  case basic, advanced
+}
+
 struct AppSettings: Codable, Equatable, Identifiable {
   var id = UUID()
   var name: String
@@ -12,7 +16,7 @@ struct AppSettings: Codable, Equatable, Identifiable {
   var position: GlowPosition = .top
   var size: Double = 0.5
   var opacity: Double = 0.9
-  var usePerTypeColors: Bool = false
+  var colorOption: ColorOptions = .basic
   var numericColor: String = "Green"
   var nonNumericColor: String = "Green"
 }
@@ -38,7 +42,7 @@ class AppState {
 
   static func resolvedColor(for app: AppSettings, badge: String) -> NSColor {
     let name: String
-    if app.usePerTypeColors {
+    if app.colorOption == .advanced {
       name = !badge.isEmpty ? app.numericColor : app.nonNumericColor
     } else {
       name = app.color
@@ -47,7 +51,8 @@ class AppState {
   }
 
   static func resolvedConfig(for app: AppSettings, badge: String) -> GlowConfig {
-    GlowConfig(color: resolvedColor(for: app, badge: badge), size: app.size, opacity: app.opacity)
+    GlowConfig(
+      color: resolvedColor(for: app, badge: badge), size: app.size, opacity: app.opacity)
   }
 
   var launchOnStartup = true
