@@ -168,7 +168,7 @@ class AppState {
       position: appearance.position)
   }
 
-  var launchOnStartup = true
+  var launchOnStartup = false
   var refreshInterval = 1.0
   var apps: [AppSettings] = []
   var dockAppNames: [String] = []

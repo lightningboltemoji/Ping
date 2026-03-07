@@ -5,6 +5,7 @@
 //  Created by Tanner on 9/13/25.
 //
 
+import ServiceManagement
 import SwiftUI
 
 @main
@@ -19,10 +20,10 @@ struct PingApp: App {
   init() {
     let state = AppState()
     if let saved = SettingsPersistence.load() {
-      state.launchOnStartup = saved.launchOnStartup
       state.refreshInterval = saved.refreshInterval
       state.apps = saved.apps
     }
+    state.launchOnStartup = SMAppService.mainApp.status == .enabled
     self.state = state
     self.dockPoller = DockPoller(state: state)
     self.glowController = GlowController(state: state, screen: NSScreen.main)

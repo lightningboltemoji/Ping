@@ -5,6 +5,7 @@
 //  Created by Tanner on 9/28/25.
 //
 
+import ServiceManagement
 import SwiftUI
 
 @available(macOS 26, *)
@@ -319,7 +320,23 @@ struct SettingsView: View {
         // General section
         SettingsSection(title: "General") {
           HStack {
-            Toggle(isOn: $state.launchOnStartup) {
+            Toggle(
+              isOn: Binding(
+                get: { state.launchOnStartup },
+                set: { newValue in
+                  do {
+                    if newValue {
+                      try SMAppService.mainApp.register()
+                    } else {
+                      try SMAppService.mainApp.unregister()
+                    }
+                    state.launchOnStartup = newValue
+                  } catch {
+                    print("Failed to update login item: \(error)")
+                  }
+                }
+              )
+            ) {
               Text("Launch on startup")
             }
           }
