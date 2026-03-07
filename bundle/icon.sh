@@ -27,3 +27,13 @@ iconutil --convert icns "$ICONSET" -o "$ICNS"
 rm -rf "$ICONSET"
 
 echo "Built $ICNS"
+
+SVG="./Bell.svg"
+RESOURCES="../Sources/Ping/Resources"
+
+if [ -f "$SVG" ]; then
+    cp "$SVG" "$RESOURCES/Bell.svg"
+    echo "Copied Bell.svg"
+else
+    echo "Warning: $SVG not found, skipping menu bar icon"
+fi

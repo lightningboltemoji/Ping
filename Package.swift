@@ -21,7 +21,8 @@ let package = Package(
         .product(name: "Yams", package: "Yams")
       ],
       resources: [
-        .process("Resources/Chango-Regular.ttf")
+        .process("Resources/Chango-Regular.ttf"),
+        .copy("Resources/Bell.svg"),
       ])
   ]
 )

@@ -55,6 +55,30 @@ struct GlowAppearanceControls: View {
   @Binding var appearance: GlowAppearance
 
   var body: some View {
+
+    // Color row
+    HStack(spacing: 8) {
+      Text("Color")
+        .foregroundStyle(.secondary)
+      Spacer()
+      Picker("Color", selection: $appearance.color) {
+        ForEach(GlowColor.allCases, id: \.self) { glowColor in
+          HStack {
+            Circle()
+              .fill(Color(nsColor: glowColor.nsColor))
+              .frame(width: 10, height: 10)
+            Text(glowColor.rawValue)
+          }
+          .tag(glowColor)
+        }
+      }
+      .labelsHidden()
+    }
+    .padding(.horizontal, 12)
+    .padding(.vertical, 8)
+
+    Divider().padding(.leading, 12)
+
     // Position row
     HStack {
       Text("Position")
@@ -96,30 +120,6 @@ struct GlowAppearanceControls: View {
       Text("\(Int(appearance.opacity * 100))%")
         .monospacedDigit()
         .frame(width: 40, alignment: .trailing)
-    }
-    .padding(.horizontal, 12)
-    .padding(.vertical, 8)
-
-    Divider().padding(.leading, 12)
-
-    // Color row
-    HStack(spacing: 8) {
-      Text("Color")
-        .foregroundStyle(.secondary)
-      Spacer()
-      Picker("Color", selection: $appearance.color) {
-        ForEach(GlowColor.allCases, id: \.self) { glowColor in
-          HStack {
-            Circle()
-              .fill(Color(nsColor: glowColor.nsColor))
-              .frame(width: 10, height: 10)
-            Text(glowColor.rawValue)
-          }
-          .tag(glowColor)
-        }
-      }
-      .labelsHidden()
-      .frame(width: 140)
     }
     .padding(.horizontal, 12)
     .padding(.vertical, 8)
@@ -248,14 +248,15 @@ struct AppCardView: View {
           Spacer()
 
           Toggle(
-            "Advanced",
+            "By badge type",
             isOn: Binding(
               get: { app.glowSettings.settingsMode == .advanced },
               set: { app.glowSettings.settingsMode = $0 ? .advanced : .basic }
             )
           )
           .toggleStyle(.switch)
-          .controlSize(.mini)
+          .controlSize(.regular)
+          .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -310,8 +311,25 @@ struct SettingsView: View {
       // Fixed header and general section
       VStack(spacing: 24) {
         // Header
-        VStack(spacing: 4) {
-          Text("ping").font(.custom("Chango", size: 48))
+        VStack(spacing: 16) {
+          HStack(spacing: 18) {
+            Text("ping").font(.custom("Chango", size: 48))
+            if let bellImage = Bundle.module.url(
+              forResource: "Bell", withExtension: "svg"
+            )
+            .flatMap(NSImage.init(contentsOf:))
+            .map({
+              $0.isTemplate = true
+              return $0
+            }) {
+              Image(nsImage: bellImage)
+                .resizable()
+                .renderingMode(.template)
+                .frame(width: 54, height: 54)
+                .foregroundStyle(.primary)
+            }
+          }
+
           Text("Never miss a notification")
             .font(.subheadline)
             .foregroundStyle(.secondary)

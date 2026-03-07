@@ -39,7 +39,7 @@ struct PingApp: App {
     .windowStyle(.hiddenTitleBar)
     .windowResizability(.contentSize)
 
-    MenuBarExtra("Ping", systemImage: "bell.fill") {
+    MenuBarExtra {
       Text("ping").font(.custom("Chango", size: 13))
       Divider()
       SettingsLink {
@@ -49,6 +49,19 @@ struct PingApp: App {
         NSApplication.shared.terminate(nil)
       }
       .keyboardShortcut("q", modifiers: .command)
+    } label: {
+      let image: NSImage = {
+        guard
+          let url = Bundle.module.url(forResource: "Bell", withExtension: "svg"),
+          let img = NSImage(contentsOf: url)
+        else {
+          return NSImage(systemSymbolName: "bell.fill", accessibilityDescription: "Ping")!
+        }
+        img.isTemplate = true
+        img.size = NSSize(width: 18, height: 18)
+        return img
+      }()
+      Image(nsImage: image)
     }
 
     Settings {
