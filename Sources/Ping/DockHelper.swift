@@ -76,8 +76,8 @@ struct DockItem {
     let elementsArray = childrenArray as! CFArray
 
     for i in 0..<CFArrayGetCount(elementsArray) {
-      let element = CFArrayGetValueAtIndex(elementsArray, i)
-      let axElement = Unmanaged<AXUIElement>.fromOpaque(element!)
+      guard let element = CFArrayGetValueAtIndex(elementsArray, i) else { continue }
+      let axElement = Unmanaged<AXUIElement>.fromOpaque(element)
         .takeUnretainedValue()
 
       // Only include actual application dock items
@@ -99,14 +99,17 @@ struct DockItem {
       )
 
       if titleError == .success, let titleString = title as? String {
+        guard
+          let axEl = copyAXUIElement(
+            from: dockList,
+            role: kAXDockItemRole as CFString,
+            at: i
+          )
+        else { continue }
         result.append(
           DockItem(
             title: titleString,
-            axElement: copyAXUIElement(
-              from: dockList,
-              role: kAXDockItemRole as CFString,
-              at: i
-            )!
+            axElement: axEl
           )
         )
       }
@@ -135,8 +138,8 @@ struct DockItem {
     var currentIndex = -1
 
     for i in 0..<CFArrayGetCount(elementsArray) {
-      let element = CFArrayGetValueAtIndex(elementsArray, i)
-      let axElement = Unmanaged<AXUIElement>.fromOpaque(element!)
+      guard let element = CFArrayGetValueAtIndex(elementsArray, i) else { continue }
+      let axElement = Unmanaged<AXUIElement>.fromOpaque(element)
         .takeUnretainedValue()
 
       if let role = role {
@@ -147,8 +150,8 @@ struct DockItem {
           &elementRole
         )
 
-        if roleError == .success, let elementRole = elementRole {
-          if CFStringCompare(elementRole as! CFString, role, [])
+        if roleError == .success, let roleStr = elementRole {
+          if CFStringCompare((roleStr as! CFString), role, [])
             == .compareEqualTo
           {
             currentIndex += 1
