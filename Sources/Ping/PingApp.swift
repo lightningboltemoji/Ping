@@ -42,6 +42,8 @@ struct PingApp: App {
     MenuBarExtra {
       Text("ping").font(.custom("Chango", size: 13))
       Divider()
+      SnoozeMenuContent(state: state)
+      Divider()
       SettingsLink {
         Text("Settings")
       }
@@ -83,5 +85,39 @@ struct PingApp: App {
     .environment(state)
     .windowStyle(.hiddenTitleBar)
     .windowResizability(.contentSize)
+  }
+}
+
+@available(macOS 26, *)
+struct SnoozeMenuContent: View {
+  let state: AppState
+  @State private var now = Date()
+
+  private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+  private let durations: [Int] = [1, 5, 10, 15, 20, 30, 45, 60]
+
+  var body: some View {
+    if state.isSnoozed, let snoozedUntil = state.snoozedUntil {
+      let remaining = max(0, Int(snoozedUntil.timeIntervalSince(now)))
+      let minutes = remaining / 60
+      let seconds = remaining % 60
+      Button("End snooze early (\(String(format: "%02d:%02d", minutes, seconds)))") {
+        state.snoozedUntil = nil
+      }
+      .onReceive(timer) { tick in
+        now = tick
+        if !state.isSnoozed {
+          state.snoozedUntil = nil
+        }
+      }
+    } else {
+      Menu("Snooze") {
+        ForEach(durations, id: \.self) { mins in
+          Button("\(mins) minute\(mins == 1 ? "" : "s")") {
+            state.snoozedUntil = Date().addingTimeInterval(Double(mins) * 60)
+          }
+        }
+      }
+    }
   }
 }

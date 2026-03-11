@@ -175,4 +175,10 @@ class AppState {
   var appIcons: [String: NSImage] = [:]
   var activeGlowConfigs: [GlowConfig] = []
   var previewGlowConfig: GlowConfig? = nil
+  var snoozedUntil: Date? = nil
+
+  var isSnoozed: Bool {
+    guard let snoozedUntil else { return false }
+    return Date() < snoozedUntil
+  }
 }

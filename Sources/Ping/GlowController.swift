@@ -12,6 +12,7 @@ class GlowController {
     handleConfigChange(state.activeGlowConfigs)
     observeConfigs()
     observePreview()
+    observeSnooze()
   }
 
   private func window(for position: GlowPosition) -> GlowWindow? {
@@ -62,7 +63,26 @@ class GlowController {
     }
   }
 
+  private func observeSnooze() {
+    withObservationTracking {
+      _ = state.snoozedUntil
+    } onChange: {
+      Task { @MainActor in
+        self.handleConfigChange(self.state.activeGlowConfigs)
+        self.observeSnooze()
+      }
+    }
+  }
+
   private func handleConfigChange(_ configs: [GlowConfig]) {
+    if state.isSnoozed {
+      for (_, win) in windows {
+        win.updateConfigs([])
+        win.hideGlow()
+      }
+      return
+    }
+
     let grouped = Dictionary(grouping: configs, by: { $0.position })
 
     for (position, posConfigs) in grouped {
