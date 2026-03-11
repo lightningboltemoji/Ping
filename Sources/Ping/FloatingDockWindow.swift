@@ -6,6 +6,8 @@ class FloatingDockWindow: NSWindow {
     position: DockPosition, margin: Double, screen: NSRect
   ) -> NSRect {
     let windowHeight: CGFloat = 80
+    let x = screen.origin.x + margin
+    let width = screen.width - margin * 2
     let y: CGFloat
     switch position {
     case .topLeft, .topCenter, .topRight:
@@ -13,7 +15,7 @@ class FloatingDockWindow: NSWindow {
     case .bottomLeft, .bottomCenter, .bottomRight:
       y = screen.origin.y + margin
     }
-    return NSRect(x: screen.origin.x, y: y, width: screen.width, height: windowHeight)
+    return NSRect(x: x, y: y, width: width, height: windowHeight)
   }
 
   init(state: AppState, screen: NSRect) {

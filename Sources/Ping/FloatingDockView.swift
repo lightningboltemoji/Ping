@@ -43,7 +43,6 @@ struct FloatingDockView: View {
           )
       }
       .opacity(settings.opacity)
-      .padding(.horizontal, settings.margin)
     }
   }
 }

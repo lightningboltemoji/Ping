@@ -436,7 +436,7 @@ struct SettingsView: View {
         HStack(spacing: 8) {
           Text("Margin")
             .foregroundStyle(.secondary)
-          Slider(value: $state.floatingDockSettings.margin, in: 0...100, step: 5)
+          Slider(value: $state.floatingDockSettings.margin, in: 0...200, step: 1)
           Text("\(Int(state.floatingDockSettings.margin))px")
             .monospacedDigit()
             .frame(width: 40, alignment: .trailing)
