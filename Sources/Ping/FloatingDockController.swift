@@ -10,6 +10,17 @@ class FloatingDockController {
     observeApps()
     observePreview()
     observeSnooze()
+    observeSettings()
+  }
+
+  private func recreateWindow() {
+    let wasVisible = window?.isVisible ?? false
+    window?.orderOut(nil)
+    window = nil
+    if wasVisible {
+      let w = ensureWindow()
+      w.orderFrontRegardless()
+    }
   }
 
   private func ensureWindow() -> FloatingDockWindow {
@@ -49,6 +60,17 @@ class FloatingDockController {
       Task { @MainActor in
         self.updateVisibility()
         self.observeSnooze()
+      }
+    }
+  }
+
+  private func observeSettings() {
+    withObservationTracking {
+      _ = state.floatingDockSettings
+    } onChange: {
+      Task { @MainActor in
+        self.recreateWindow()
+        self.observeSettings()
       }
     }
   }

@@ -121,11 +121,39 @@ struct GlowSettings: Codable, Equatable {
   }
 }
 
+enum DockPosition: String, Codable, CaseIterable {
+  case topLeft, topCenter, topRight
+  case bottomLeft, bottomCenter, bottomRight
+
+  var label: String {
+    switch self {
+    case .topLeft: "Top Left"
+    case .topCenter: "Top Center"
+    case .topRight: "Top Right"
+    case .bottomLeft: "Bottom Left"
+    case .bottomCenter: "Bottom Center"
+    case .bottomRight: "Bottom Right"
+    }
+  }
+}
+
 struct FloatingDockSettings: Codable, Equatable {
-  var showAppName: Bool = true
+  var opacity: Double = 0.8
+  var iconSize: Double = 32
+  var position: DockPosition = .topCenter
+  var margin: Double = 20
+  var padding: Double = 16
+  var showAppNames: Bool = true
+  var backgroundColor: GlowColor = .white
 
   enum CodingKeys: String, CodingKey {
-    case showAppName = "show_app_name"
+    case opacity
+    case iconSize = "icon_size"
+    case position
+    case margin
+    case padding
+    case showAppNames = "show_app_names"
+    case backgroundColor = "background_color"
   }
 }
 
@@ -134,13 +162,11 @@ struct AppSettings: Codable, Equatable, Identifiable {
   var name: String
   var effect: Effect = .glow
   var glowSettings: GlowSettings = GlowSettings()
-  var floatingDockSettings: FloatingDockSettings = FloatingDockSettings()
 
   enum CodingKeys: String, CodingKey {
     case name
     case effect
     case glowSettings = "glow_settings"
-    case floatingDockSettings = "floating_dock_settings"
   }
 }
 
@@ -148,7 +174,6 @@ struct FloatingDockItem: Equatable {
   var appName: String
   var badge: String
   var icon: NSImage?
-  var showAppName: Bool
 }
 
 @Observable
@@ -182,6 +207,7 @@ class AppState {
   var appIcons: [String: NSImage] = [:]
   var activeGlowConfigs: [GlowConfig] = []
   var previewGlowConfig: GlowConfig? = nil
+  var floatingDockSettings = FloatingDockSettings()
   var activeFloatingDockApps: [FloatingDockItem] = []
   var previewFloatingDockApps: [FloatingDockItem] = []
   var snoozedUntil: Date? = nil

@@ -23,6 +23,7 @@ struct PingApp: App {
     if let saved = SettingsPersistence.load() {
       state.refreshInterval = saved.refreshInterval
       state.apps = saved.apps
+      state.floatingDockSettings = saved.floatingDockSettings
     }
     state.launchOnStartup = SMAppService.mainApp.status == .enabled
     self.state = state

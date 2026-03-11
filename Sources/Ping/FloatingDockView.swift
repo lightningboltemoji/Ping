@@ -8,6 +8,7 @@ struct FloatingDockView: View {
     let items =
       state.previewFloatingDockApps.isEmpty
       ? state.activeFloatingDockApps : state.previewFloatingDockApps
+    let settings = state.floatingDockSettings
     if !items.isEmpty {
       HStack(spacing: 12) {
         ForEach(Array(items.enumerated()), id: \.offset) { _, item in
@@ -15,14 +16,14 @@ struct FloatingDockView: View {
             if let icon = item.icon {
               Image(nsImage: icon)
                 .resizable()
-                .frame(width: 32, height: 32)
+                .frame(width: settings.iconSize, height: settings.iconSize)
             } else {
               Image(systemName: "app.fill")
                 .resizable()
-                .frame(width: 32, height: 32)
+                .frame(width: settings.iconSize, height: settings.iconSize)
                 .foregroundStyle(.secondary)
             }
-            if item.showAppName {
+            if settings.showAppNames {
               Text(item.appName)
                 .font(.system(size: 10))
                 .foregroundStyle(.primary)
@@ -31,10 +32,17 @@ struct FloatingDockView: View {
           }
         }
       }
-      .padding(.horizontal, 16)
+      .padding(.horizontal, settings.padding)
       .padding(.vertical, 10)
-      .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-      .opacity(0.8)
+      .background {
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+          .fill(.ultraThinMaterial)
+          .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+              .fill(Color(nsColor: settings.backgroundColor.nsColor).opacity(0.15))
+          )
+      }
+      .opacity(settings.opacity)
     }
   }
 }

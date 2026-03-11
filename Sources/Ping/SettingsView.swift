@@ -280,18 +280,6 @@ struct AppCardView: View {
         )
       }
 
-      if app.effect == .floatingDock {
-        Divider().padding(.leading, 12)
-
-        HStack {
-          Toggle(isOn: $app.floatingDockSettings.showAppName) {
-            Text("Show app name")
-          }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-      }
-
       Spacer()
     }
     .padding(.horizontal, 12)
@@ -396,6 +384,117 @@ struct SettingsView: View {
       .padding(.top, 20)
       .padding(.bottom, 12)
 
+      // Floating Dock section
+      SettingsSection(title: "Floating Dock") {
+        // Position
+        HStack {
+          Text("Position")
+            .foregroundStyle(.secondary)
+          Spacer()
+          Picker("Position", selection: $state.floatingDockSettings.position) {
+            ForEach(DockPosition.allCases, id: \.self) { pos in
+              Text(pos.label).tag(pos)
+            }
+          }
+          .labelsHidden()
+          .frame(width: 160)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+
+        Divider().padding(.leading, 12)
+
+        // Icon size
+        HStack(spacing: 8) {
+          Text("Icon size")
+            .foregroundStyle(.secondary)
+          Slider(value: $state.floatingDockSettings.iconSize, in: 16...64, step: 4)
+          Text("\(Int(state.floatingDockSettings.iconSize))px")
+            .monospacedDigit()
+            .frame(width: 40, alignment: .trailing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+
+        Divider().padding(.leading, 12)
+
+        // Opacity
+        HStack(spacing: 8) {
+          Text("Opacity")
+            .foregroundStyle(.secondary)
+          Slider(value: $state.floatingDockSettings.opacity, in: 0.2...1.0, step: 0.05)
+          Text("\(Int(state.floatingDockSettings.opacity * 100))%")
+            .monospacedDigit()
+            .frame(width: 40, alignment: .trailing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+
+        Divider().padding(.leading, 12)
+
+        // Margin
+        HStack(spacing: 8) {
+          Text("Margin")
+            .foregroundStyle(.secondary)
+          Slider(value: $state.floatingDockSettings.margin, in: 0...100, step: 5)
+          Text("\(Int(state.floatingDockSettings.margin))px")
+            .monospacedDigit()
+            .frame(width: 40, alignment: .trailing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+
+        Divider().padding(.leading, 12)
+
+        // Padding
+        HStack(spacing: 8) {
+          Text("Padding")
+            .foregroundStyle(.secondary)
+          Slider(value: $state.floatingDockSettings.padding, in: 4...40, step: 2)
+          Text("\(Int(state.floatingDockSettings.padding))px")
+            .monospacedDigit()
+            .frame(width: 40, alignment: .trailing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+
+        Divider().padding(.leading, 12)
+
+        // Background color
+        HStack(spacing: 8) {
+          Text("Background")
+            .foregroundStyle(.secondary)
+          Spacer()
+          Picker("Background", selection: $state.floatingDockSettings.backgroundColor) {
+            ForEach(GlowColor.allCases, id: \.self) { glowColor in
+              HStack {
+                Circle()
+                  .fill(Color(nsColor: glowColor.nsColor))
+                  .frame(width: 10, height: 10)
+                Text(glowColor.rawValue)
+              }
+              .tag(glowColor)
+            }
+          }
+          .labelsHidden()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+
+        Divider().padding(.leading, 12)
+
+        // Show app names
+        HStack {
+          Toggle(isOn: $state.floatingDockSettings.showAppNames) {
+            Text("Show app names")
+          }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+      }
+      .padding(.horizontal, 20)
+      .padding(.bottom, 12)
+
       // Apps section header (fixed)
       HStack {
         Text("Apps")
@@ -457,8 +556,7 @@ struct SettingsView: View {
                       FloatingDockItem(
                         appName: app.name.isEmpty ? "App" : app.name,
                         badge: "1",
-                        icon: state.appIcons[app.name],
-                        showAppName: app.floatingDockSettings.showAppName
+                        icon: state.appIcons[app.name]
                       )
                     ]
                   } else {

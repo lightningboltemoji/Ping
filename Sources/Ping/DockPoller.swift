@@ -72,8 +72,7 @@ class DockPoller {
           FloatingDockItem(
             appName: app.name,
             badge: badge,
-            icon: state.appIcons[app.name],
-            showAppName: app.floatingDockSettings.showAppName
+            icon: state.appIcons[app.name]
           ))
       }
     }
