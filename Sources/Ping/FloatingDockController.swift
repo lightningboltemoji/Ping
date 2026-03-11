@@ -25,7 +25,7 @@ class FloatingDockController {
 
   private func ensureWindow() -> FloatingDockWindow {
     if let window { return window }
-    let screenFrame = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+    let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
     let w = FloatingDockWindow(state: state, screen: screenFrame)
     window = w
     return w
