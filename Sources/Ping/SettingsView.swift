@@ -352,14 +352,40 @@ struct AppCardView: View {
 }
 
 @available(macOS 26, *)
-struct SettingsView: View {
+enum SettingsTab: String, CaseIterable, Identifiable {
+  case general
+  case line
+  case floatingDock
+  case apps
 
+  var id: String { rawValue }
+
+  var label: String {
+    switch self {
+    case .general: "General"
+    case .line: "Line"
+    case .floatingDock: "Floating Dock"
+    case .apps: "Apps"
+    }
+  }
+
+  var icon: String {
+    switch self {
+    case .general: "gearshape"
+    case .line: "line.horizontal.star.fill.line.horizontal"
+    case .floatingDock: "dock.rectangle"
+    case .apps: "app.badge"
+    }
+  }
+}
+
+@available(macOS 26, *)
+struct GeneralSettingsView: View {
   @Environment(AppState.self) private var state
 
   var body: some View {
     @Bindable var state = state
-    VStack(spacing: 0) {
-      // Fixed header and general section
+    ScrollView {
       VStack(spacing: 24) {
         // Header
         VStack(spacing: 16) {
@@ -386,8 +412,7 @@ struct SettingsView: View {
             .foregroundStyle(.secondary)
         }
 
-        // General section
-        SettingsSection(title: "General") {
+        SettingsSection {
           HStack {
             Toggle(
               isOn: Binding(
@@ -434,12 +459,19 @@ struct SettingsView: View {
           .padding(.vertical, 8)
         }
       }
-      .padding(.horizontal, 20)
-      .padding(.top, 20)
-      .padding(.bottom, 12)
+      .padding(20)
+    }
+  }
+}
 
-      // Floating Dock section
-      SettingsSection(title: "Floating Dock") {
+@available(macOS 26, *)
+struct FloatingDockSettingsView: View {
+  @Environment(AppState.self) private var state
+
+  var body: some View {
+    @Bindable var state = state
+    ScrollView {
+      SettingsSection {
         // Position
         HStack {
           Text("Position")
@@ -476,7 +508,8 @@ struct SettingsView: View {
         HStack(spacing: 8) {
           Text("Opacity")
             .foregroundStyle(.secondary)
-          Slider(value: $state.floatingDockSettings.opacity, in: 0.2...1.0, step: 0.05)
+          Slider(
+            value: $state.floatingDockSettings.opacity, in: 0.2...1.0, step: 0.05)
           Text("\(Int(state.floatingDockSettings.opacity * 100))%")
             .monospacedDigit()
             .frame(width: 40, alignment: .trailing)
@@ -557,11 +590,19 @@ struct SettingsView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
       }
-      .padding(.horizontal, 20)
-      .padding(.bottom, 12)
+      .padding(20)
+    }
+  }
+}
 
-      // Line section
-      SettingsSection(title: "Line") {
+@available(macOS 26, *)
+struct LineSettingsView: View {
+  @Environment(AppState.self) private var state
+
+  var body: some View {
+    @Bindable var state = state
+    ScrollView {
+      SettingsSection {
         // Position
         HStack {
           Text("Position")
@@ -607,15 +648,20 @@ struct SettingsView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
       }
-      .padding(.horizontal, 20)
-      .padding(.bottom, 12)
+      .padding(20)
+    }
+  }
+}
 
-      // Apps section header (fixed)
+@available(macOS 26, *)
+struct AppsSettingsView: View {
+  @Environment(AppState.self) private var state
+
+  var body: some View {
+    @Bindable var state = state
+    VStack(spacing: 0) {
+      // Apps section header
       HStack {
-        Text("Apps")
-          .font(.system(size: 12, weight: .medium))
-          .foregroundStyle(.secondary)
-          .textCase(.uppercase)
         Spacer()
         Button {
           withAnimation(.easeInOut(duration: 0.2)) {
@@ -628,7 +674,8 @@ struct SettingsView: View {
         }
         .buttonStyle(.borderless)
       }
-      .padding(.horizontal, 24)
+      .padding(.horizontal, 20)
+      .padding(.top, 12)
       .padding(.bottom, 6)
 
       // Scrollable apps list
@@ -690,7 +737,60 @@ struct SettingsView: View {
         .padding(.bottom, 20)
       }
     }
-    .frame(maxWidth: 450, minHeight: 900, maxHeight: 900)
-    .scenePadding()
+  }
+}
+
+@available(macOS 26, *)
+struct SettingsView: View {
+
+  @Environment(AppState.self) private var state
+  @State private var selectedTab: SettingsTab = .general
+
+  var body: some View {
+    HStack(spacing: 0) {
+      // Sidebar
+      VStack(alignment: .leading, spacing: 2) {
+        ForEach(SettingsTab.allCases) { tab in
+          Button {
+            selectedTab = tab
+          } label: {
+            Label(tab.label, systemImage: tab.icon)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(.vertical, 6)
+              .padding(.horizontal, 8)
+              .background(
+                selectedTab == tab
+                  ? Color.accentColor.opacity(0.2)
+                  : Color.clear
+              )
+              .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+          }
+          .buttonStyle(.plain)
+          .foregroundStyle(selectedTab == tab ? .primary : .secondary)
+        }
+        Spacer()
+      }
+      .padding(12)
+      .frame(width: 180)
+      .background(.background)
+
+      Divider()
+
+      // Detail
+      Group {
+        switch selectedTab {
+        case .general:
+          GeneralSettingsView()
+        case .line:
+          LineSettingsView()
+        case .floatingDock:
+          FloatingDockSettingsView()
+        case .apps:
+          AppsSettingsView()
+        }
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    .frame(width: 650, height: 600)
   }
 }

@@ -78,20 +78,12 @@ struct PingApp: App {
       SettingsView().onAppear {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
-        if let window = NSApplication.shared.windows.first(where: {
-          $0.identifier?.rawValue.contains("Settings") ?? false
-        }) {
-          window.titlebarAppearsTransparent = true
-          window.titleVisibility = .hidden
-          window.styleMask.insert(.fullSizeContentView)
-        }
       }
       .onDisappear {
         NSApp.setActivationPolicy(.accessory)
       }
     }
     .environment(state)
-    .windowStyle(.hiddenTitleBar)
     .windowResizability(.contentSize)
   }
 }
