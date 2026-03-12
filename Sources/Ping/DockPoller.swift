@@ -118,7 +118,8 @@ class DockPoller {
       case .glow:
         configs.append(AppState.resolvedConfig(for: app, badge: badge))
       case .line:
-        lineConfigs.append(AppState.resolvedConfig(for: app, badge: badge))
+        lineConfigs.append(
+          AppState.resolvedLineConfig(for: app, badge: badge, lineSettings: state.lineSettings))
       case .floatingDock:
         floatingDockItems.append(
           FloatingDockItem(

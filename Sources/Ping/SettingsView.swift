@@ -127,10 +127,38 @@ struct GlowAppearanceControls: View {
 }
 
 @available(macOS 26, *)
+struct LineColorControls: View {
+  @Binding var appearance: GlowAppearance
+
+  var body: some View {
+    HStack(spacing: 8) {
+      Text("Color")
+        .foregroundStyle(.secondary)
+      Spacer()
+      Picker("Color", selection: $appearance.color) {
+        ForEach(GlowColor.allCases, id: \.self) { glowColor in
+          HStack {
+            Circle()
+              .fill(Color(nsColor: glowColor.nsColor))
+              .frame(width: 10, height: 10)
+            Text(glowColor.rawValue)
+          }
+          .tag(glowColor)
+        }
+      }
+      .labelsHidden()
+    }
+    .padding(.horizontal, 12)
+    .padding(.vertical, 8)
+  }
+}
+
+@available(macOS 26, *)
 struct AppCardView: View {
   @Binding var app: AppSettings
   let dockAppNames: [String]
   let appIcons: [String: NSImage]
+  let lineSettings: LineSettings
   let onDelete: () -> Void
   let onPreview: (GlowConfig?) -> Void
   let onLinePreview: ([GlowConfig]) -> Void
@@ -172,9 +200,13 @@ struct AppCardView: View {
       onFloatingDockPreview(false)
       if app.glowSettings.settingsMode == .advanced {
         let badge = advancedTab == .nonNumeric ? "" : "1"
-        onLinePreview([AppState.resolvedConfig(for: app, badge: badge)])
+        onLinePreview([
+          AppState.resolvedLineConfig(for: app, badge: badge, lineSettings: lineSettings)
+        ])
       } else {
-        onLinePreview([AppState.resolvedConfig(for: app, badge: "")])
+        onLinePreview([
+          AppState.resolvedLineConfig(for: app, badge: "", lineSettings: lineSettings)
+        ])
       }
     case .floatingDock:
       onPreview(nil)
@@ -285,12 +317,21 @@ struct AppCardView: View {
 
         Divider().padding(.leading, 12)
 
-        GlowAppearanceControls(
-          appearance: app.glowSettings.settingsMode == .advanced
-            && advancedTab == .nonNumeric
-            ? $app.glowSettings.nonNumeric
-            : $app.glowSettings.normal
-        )
+        if app.effect == .glow {
+          GlowAppearanceControls(
+            appearance: app.glowSettings.settingsMode == .advanced
+              && advancedTab == .nonNumeric
+              ? $app.glowSettings.nonNumeric
+              : $app.glowSettings.normal
+          )
+        } else {
+          LineColorControls(
+            appearance: app.glowSettings.settingsMode == .advanced
+              && advancedTab == .nonNumeric
+              ? $app.glowSettings.nonNumeric
+              : $app.glowSettings.normal
+          )
+        }
       }
 
       Spacer()
@@ -519,6 +560,56 @@ struct SettingsView: View {
       .padding(.horizontal, 20)
       .padding(.bottom, 12)
 
+      // Line section
+      SettingsSection(title: "Line") {
+        // Position
+        HStack {
+          Text("Position")
+            .foregroundStyle(.secondary)
+          Spacer()
+          Picker("Position", selection: $state.lineSettings.position) {
+            ForEach(GlowPosition.allCases, id: \.self) { pos in
+              Text(pos.rawValue.capitalized).tag(pos)
+            }
+          }
+          .pickerStyle(.segmented)
+          .frame(width: 220)
+          .labelsHidden()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+
+        Divider().padding(.leading, 12)
+
+        // Size
+        HStack(spacing: 8) {
+          Text("Size")
+            .foregroundStyle(.secondary)
+          Slider(value: $state.lineSettings.size, in: 0.25...1.0, step: 0.05)
+          Text("\(Int(state.lineSettings.size * 100))%")
+            .monospacedDigit()
+            .frame(width: 40, alignment: .trailing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+
+        Divider().padding(.leading, 12)
+
+        // Opacity
+        HStack(spacing: 8) {
+          Text("Opacity")
+            .foregroundStyle(.secondary)
+          Slider(value: $state.lineSettings.opacity, in: 0.4...1.0, step: 0.05)
+          Text("\(Int(state.lineSettings.opacity * 100))%")
+            .monospacedDigit()
+            .frame(width: 40, alignment: .trailing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+      }
+      .padding(.horizontal, 20)
+      .padding(.bottom, 12)
+
       // Apps section header (fixed)
       HStack {
         Text("Apps")
@@ -565,6 +656,7 @@ struct SettingsView: View {
                 app: $app,
                 dockAppNames: state.dockAppNames,
                 appIcons: state.appIcons,
+                lineSettings: state.lineSettings,
                 onDelete: {
                   let id = app.id
                   withAnimation(.easeInOut(duration: 0.2)) {

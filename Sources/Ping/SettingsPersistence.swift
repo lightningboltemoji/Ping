@@ -8,12 +8,14 @@ struct SettingsFile: Codable {
   var launchOnStartup: Bool
   var refreshInterval: Double
   var apps: [AppSettings]
+  var lineSettings: LineSettings
   var floatingDockSettings: FloatingDockSettings
 
   enum CodingKeys: String, CodingKey {
     case launchOnStartup = "launch_on_startup"
     case refreshInterval = "refresh_interval"
     case apps
+    case lineSettings = "line_settings"
     case floatingDockSettings = "floating_dock_settings"
   }
 
@@ -21,6 +23,7 @@ struct SettingsFile: Codable {
     launchOnStartup = state.launchOnStartup
     refreshInterval = state.refreshInterval
     apps = state.apps
+    lineSettings = state.lineSettings
     floatingDockSettings = state.floatingDockSettings
   }
 
@@ -29,6 +32,9 @@ struct SettingsFile: Codable {
     launchOnStartup = try container.decode(Bool.self, forKey: .launchOnStartup)
     refreshInterval = try container.decode(Double.self, forKey: .refreshInterval)
     apps = try container.decode([AppSettings].self, forKey: .apps)
+    lineSettings =
+      try container.decodeIfPresent(LineSettings.self, forKey: .lineSettings)
+      ?? LineSettings()
     floatingDockSettings =
       try container.decodeIfPresent(FloatingDockSettings.self, forKey: .floatingDockSettings)
       ?? FloatingDockSettings()
@@ -56,7 +62,7 @@ enum SettingsPersistence {
 
   static func load() -> (
     launchOnStartup: Bool, refreshInterval: Double, apps: [AppSettings],
-    floatingDockSettings: FloatingDockSettings
+    lineSettings: LineSettings, floatingDockSettings: FloatingDockSettings
   )? {
     guard FileManager.default.fileExists(atPath: configFile.path) else { return nil }
     do {
@@ -67,6 +73,7 @@ enum SettingsPersistence {
         launchOnStartup: settings.launchOnStartup,
         refreshInterval: settings.refreshInterval,
         apps: settings.apps,
+        lineSettings: settings.lineSettings,
         floatingDockSettings: settings.floatingDockSettings
       )
     } catch {
@@ -91,6 +98,7 @@ class SettingsAutoSaver {
       _ = state.launchOnStartup
       _ = state.refreshInterval
       _ = state.apps
+      _ = state.lineSettings
       _ = state.floatingDockSettings
     } onChange: {
       Task { @MainActor in

@@ -139,6 +139,12 @@ enum DockPosition: String, Codable, CaseIterable {
   }
 }
 
+struct LineSettings: Codable, Equatable {
+  var position: GlowPosition = .bottom
+  var size: Double = 1.0
+  var opacity: Double = 1.0
+}
+
 struct FloatingDockSettings: Codable, Equatable {
   var opacity: Double = 0.8
   var iconSize: Double = 32
@@ -204,6 +210,16 @@ class AppState {
       position: appearance.position)
   }
 
+  static func resolvedLineConfig(
+    for app: AppSettings, badge: String, lineSettings: LineSettings
+  ) -> GlowConfig {
+    let appearance = resolvedAppearance(for: app, badge: badge)
+    return GlowConfig(
+      color: appearance.color.nsColor.withAlphaComponent(lineSettings.opacity),
+      size: lineSettings.size, opacity: lineSettings.opacity,
+      position: lineSettings.position)
+  }
+
   var launchOnStartup = false
   var refreshInterval = 1.0
   var apps: [AppSettings] = []
@@ -213,6 +229,7 @@ class AppState {
   var activeLineConfigs: [GlowConfig] = []
   var previewGlowConfig: GlowConfig? = nil
   var previewLineConfigs: [GlowConfig] = []
+  var lineSettings = LineSettings()
   var floatingDockSettings = FloatingDockSettings()
   var activeFloatingDockApps: [FloatingDockItem] = []
   var previewFloatingDockApps: [FloatingDockItem] = []

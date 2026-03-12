@@ -11,6 +11,7 @@ class LineController {
     self.screen = screen
     handleConfigChange(state.activeLineConfigs)
     observeConfigs()
+    observeLineSettings()
     observePreview()
     observeSnooze()
   }
@@ -33,6 +34,27 @@ class LineController {
         self.observeConfigs()
       }
     }
+  }
+
+  private func observeLineSettings() {
+    withObservationTracking {
+      _ = state.lineSettings
+    } onChange: {
+      Task { @MainActor in
+        self.reResolveConfigs()
+        self.observeLineSettings()
+      }
+    }
+  }
+
+  private func reResolveConfigs() {
+    var configs: [GlowConfig] = []
+    for app in state.apps where app.effect == .line {
+      guard let badge = state.currentBadges[app.name] else { continue }
+      configs.append(
+        AppState.resolvedLineConfig(for: app, badge: badge, lineSettings: state.lineSettings))
+    }
+    state.activeLineConfigs = configs
   }
 
   private func observePreview() {
