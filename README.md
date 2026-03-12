@@ -26,11 +26,10 @@ When using the settings UI, changes are written to `~/.config/ping/settings.yaml
 
 ## Building
 
-To build and package:
+To build and package into Ping.app:
 
 ```
 ./build.sh
-# creates => bundle/Ping.app
 ```
 
 ## Motivation

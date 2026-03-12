@@ -13,8 +13,8 @@ APP="Ping.app"
 rm -rf "$APP"
 
 mkdir -p "$APP/Contents/MacOS"
-cp "$BUILD_DIR/Ping" "$APP/Contents/MacOS/Ping"
-cp -R "$BUILD_DIR/Ping_Ping.bundle" "$APP/Ping_Ping.bundle"
+cp "$BUILD_DIR/Ping" "$APP/Contents/MacOS/"
+cp -a "$BUILD_DIR/Ping_Ping.bundle" "$APP/"
 cp -a ".app/" "$APP/"
 
 if codesign --force --deep --sign - "$APP" 2>/dev/null; then
