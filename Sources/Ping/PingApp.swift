@@ -98,17 +98,13 @@ struct AcknowledgeMenuContent: View {
   let state: AppState
 
   var body: some View {
+    Button("Acknowledge") {
+      state.acknowledge()
+    }
+    .disabled(state.currentBadges.isEmpty)
     if state.hasAcknowledgedApps {
       let names = state.acknowledgedBadges.keys.sorted().joined(separator: ", ")
       Text("Suppressed: \(names)")
-      Button("Clear acknowledgement") {
-        state.clearAcknowledgements()
-      }
-    } else {
-      Button("Acknowledge") {
-        state.acknowledge()
-      }
-      .disabled(state.currentBadges.isEmpty)
     }
   }
 }

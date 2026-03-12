@@ -229,7 +229,4 @@ class AppState {
     acknowledgedBadges = currentBadges
   }
 
-  func clearAcknowledgements() {
-    acknowledgedBadges = [:]
-  }
 }

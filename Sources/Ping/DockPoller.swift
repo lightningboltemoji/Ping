@@ -6,7 +6,7 @@ private let logger = Logger(subsystem: "Ping", category: "polling")
 
 private struct BadgeOverride: Decodable {
   let appName: String
-  let badge: String
+  let badge: String?
   let at: Double?
 }
 
@@ -39,10 +39,10 @@ class DockPoller {
     }
   }
 
-  private func currentBadgeOverrides() -> [String: String]? {
+  private func currentBadgeOverrides() -> [String: String?]? {
     guard let entries = badgeOverrideEntries else { return nil }
     let elapsed = Date().timeIntervalSince(launchTime)
-    var dict: [String: String] = [:]
+    var dict: [String: String?] = [:]
     for entry in entries where elapsed >= (entry.at ?? 0) {
       dict[entry.appName] = entry.badge
     }
@@ -84,8 +84,8 @@ class DockPoller {
 
     for app in state.apps {
       let badge: String?
-      if let overrideBadge = currentBadgeOverrides()?[app.name] {
-        badge = overrideBadge
+      if let overrides = currentBadgeOverrides(), let override = overrides[app.name] {
+        badge = override
       } else if let dockItem = dockItems.first(where: { $0.title == app.name }) {
         badge = dockItem.badgeCount()
       } else {
@@ -103,6 +103,10 @@ class DockPoller {
 
       if let acked = state.acknowledgedBadges[app.name] {
         if shouldSuppress(current: badge, acknowledged: acked) {
+          // Track decreases so a return to the prior level counts as an increase
+          if badge != acked {
+            state.acknowledgedBadges[app.name] = badge
+          }
           continue
         } else {
           state.acknowledgedBadges.removeValue(forKey: app.name)
