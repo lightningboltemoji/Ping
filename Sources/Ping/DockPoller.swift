@@ -79,6 +79,7 @@ class DockPoller {
     }
 
     var configs: [GlowConfig] = []
+    var lineConfigs: [GlowConfig] = []
     var floatingDockItems: [FloatingDockItem] = []
     var pollBadges: [String: String] = [:]
 
@@ -116,6 +117,8 @@ class DockPoller {
       switch app.effect {
       case .glow:
         configs.append(AppState.resolvedConfig(for: app, badge: badge))
+      case .line:
+        lineConfigs.append(AppState.resolvedConfig(for: app, badge: badge))
       case .floatingDock:
         floatingDockItems.append(
           FloatingDockItem(
@@ -128,6 +131,7 @@ class DockPoller {
 
     state.currentBadges = pollBadges
     state.activeGlowConfigs = configs
+    state.activeLineConfigs = lineConfigs
     state.activeFloatingDockApps = floatingDockItems
   }
 }

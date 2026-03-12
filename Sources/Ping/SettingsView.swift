@@ -133,6 +133,7 @@ struct AppCardView: View {
   let appIcons: [String: NSImage]
   let onDelete: () -> Void
   let onPreview: (GlowConfig?) -> Void
+  let onLinePreview: ([GlowConfig]) -> Void
   let onFloatingDockPreview: (Bool) -> Void
 
   enum AdvancedTab: String, CaseIterable {
@@ -152,11 +153,13 @@ struct AppCardView: View {
   private func updatePreview() {
     guard isHovering else {
       onPreview(nil)
+      onLinePreview([])
       onFloatingDockPreview(false)
       return
     }
     switch app.effect {
     case .glow:
+      onLinePreview([])
       onFloatingDockPreview(false)
       if app.glowSettings.settingsMode == .advanced {
         let badge = advancedTab == .nonNumeric ? "" : "1"
@@ -164,8 +167,18 @@ struct AppCardView: View {
       } else {
         onPreview(AppState.resolvedConfig(for: app, badge: ""))
       }
+    case .line:
+      onPreview(nil)
+      onFloatingDockPreview(false)
+      if app.glowSettings.settingsMode == .advanced {
+        let badge = advancedTab == .nonNumeric ? "" : "1"
+        onLinePreview([AppState.resolvedConfig(for: app, badge: badge)])
+      } else {
+        onLinePreview([AppState.resolvedConfig(for: app, badge: "")])
+      }
     case .floatingDock:
       onPreview(nil)
+      onLinePreview([])
       onFloatingDockPreview(true)
     }
   }
@@ -237,7 +250,7 @@ struct AppCardView: View {
       .padding(.horizontal, 12)
       .padding(.vertical, 8)
 
-      if app.effect == .glow {
+      if app.effect == .glow || app.effect == .line {
         Divider().padding(.leading, 12)
 
         HStack(spacing: 8) {
@@ -560,6 +573,9 @@ struct SettingsView: View {
                 },
                 onPreview: { config in
                   state.previewGlowConfig = config
+                },
+                onLinePreview: { configs in
+                  state.previewLineConfigs = configs
                 },
                 onFloatingDockPreview: { show in
                   if show {

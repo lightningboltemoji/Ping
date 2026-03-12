@@ -11,11 +11,13 @@ enum ColorOptions: String, Codable, CaseIterable {
 
 enum Effect: String, Codable, CaseIterable {
   case glow
+  case line
   case floatingDock
 
   var label: String {
     switch self {
     case .glow: "Glow"
+    case .line: "Line"
     case .floatingDock: "Floating Dock"
     }
   }
@@ -208,7 +210,9 @@ class AppState {
   var dockAppNames: [String] = []
   var appIcons: [String: NSImage] = [:]
   var activeGlowConfigs: [GlowConfig] = []
+  var activeLineConfigs: [GlowConfig] = []
   var previewGlowConfig: GlowConfig? = nil
+  var previewLineConfigs: [GlowConfig] = []
   var floatingDockSettings = FloatingDockSettings()
   var activeFloatingDockApps: [FloatingDockItem] = []
   var previewFloatingDockApps: [FloatingDockItem] = []
