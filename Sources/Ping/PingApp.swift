@@ -45,6 +45,8 @@ struct PingApp: App {
     MenuBarExtra {
       Text("ping").font(.custom("Chango", size: 13))
       Divider()
+      AcknowledgeMenuContent(state: state)
+      Divider()
       SnoozeMenuContent(state: state)
       Divider()
       SettingsLink {
@@ -88,6 +90,26 @@ struct PingApp: App {
     .environment(state)
     .windowStyle(.hiddenTitleBar)
     .windowResizability(.contentSize)
+  }
+}
+
+@available(macOS 26, *)
+struct AcknowledgeMenuContent: View {
+  let state: AppState
+
+  var body: some View {
+    if state.hasAcknowledgedApps {
+      let names = state.acknowledgedBadges.keys.sorted().joined(separator: ", ")
+      Text("Suppressed: \(names)")
+      Button("Clear acknowledgement") {
+        state.clearAcknowledgements()
+      }
+    } else {
+      Button("Acknowledge") {
+        state.acknowledge()
+      }
+      .disabled(state.currentBadges.isEmpty)
+    }
   }
 }
 

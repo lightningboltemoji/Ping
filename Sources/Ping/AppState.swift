@@ -213,9 +213,23 @@ class AppState {
   var activeFloatingDockApps: [FloatingDockItem] = []
   var previewFloatingDockApps: [FloatingDockItem] = []
   var snoozedUntil: Date? = nil
+  var acknowledgedBadges: [String: String] = [:]
+  var currentBadges: [String: String] = [:]
 
   var isSnoozed: Bool {
     guard let snoozedUntil else { return false }
     return Date() < snoozedUntil
+  }
+
+  var hasAcknowledgedApps: Bool {
+    !acknowledgedBadges.isEmpty
+  }
+
+  func acknowledge() {
+    acknowledgedBadges = currentBadges
+  }
+
+  func clearAcknowledgements() {
+    acknowledgedBadges = [:]
   }
 }

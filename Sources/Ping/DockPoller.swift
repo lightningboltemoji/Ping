@@ -7,6 +7,7 @@ private let logger = Logger(subsystem: "Ping", category: "polling")
 private struct BadgeOverride: Decodable {
   let appName: String
   let badge: String
+  let at: Double?
 }
 
 @MainActor
@@ -14,9 +15,22 @@ class DockPoller {
 
   private let state: AppState
   private var pollingTask: Task<Void, Never>?
+  private let badgeOverrideEntries: [BadgeOverride]?
+  private let launchTime: Date
 
   init(state: AppState) {
     self.state = state
+    self.launchTime = Date()
+
+    if let json = ProcessInfo.processInfo.environment["BADGES"],
+      let data = json.data(using: .utf8),
+      let entries = try? JSONDecoder().decode([BadgeOverride].self, from: data)
+    {
+      self.badgeOverrideEntries = entries
+    } else {
+      self.badgeOverrideEntries = nil
+    }
+
     pollingTask = Task {
       while !Task.isCancelled {
         self.poll()
@@ -25,15 +39,29 @@ class DockPoller {
     }
   }
 
-  private static let badgeOverrides: [String: String]? = {
-    guard let json = ProcessInfo.processInfo.environment["BADGES"],
-      let data = json.data(using: .utf8),
-      let entries = try? JSONDecoder().decode([BadgeOverride].self, from: data)
-    else { return nil }
+  private func currentBadgeOverrides() -> [String: String]? {
+    guard let entries = badgeOverrideEntries else { return nil }
+    let elapsed = Date().timeIntervalSince(launchTime)
     var dict: [String: String] = [:]
-    for entry in entries { dict[entry.appName] = entry.badge }
+    for entry in entries where elapsed >= (entry.at ?? 0) {
+      dict[entry.appName] = entry.badge
+    }
     return dict
-  }()
+  }
+
+  private func shouldSuppress(current: String, acknowledged: String) -> Bool {
+    if let ackNum = Int(acknowledged) {
+      if let curNum = Int(current) {
+        return curNum <= ackNum
+      }
+      return false
+    }
+    // Ack was non-numeric
+    if Int(current) != nil {
+      return false
+    }
+    return true
+  }
 
   private func poll() {
     let dockItems = DockItem.list()
@@ -52,9 +80,11 @@ class DockPoller {
 
     var configs: [GlowConfig] = []
     var floatingDockItems: [FloatingDockItem] = []
+    var pollBadges: [String: String] = [:]
+
     for app in state.apps {
       let badge: String?
-      if let overrideBadge = Self.badgeOverrides?[app.name] {
+      if let overrideBadge = currentBadgeOverrides()?[app.name] {
         badge = overrideBadge
       } else if let dockItem = dockItems.first(where: { $0.title == app.name }) {
         badge = dockItem.badgeCount()
@@ -62,7 +92,22 @@ class DockPoller {
         badge = nil
       }
 
-      guard let badge else { continue }
+      if let badge {
+        pollBadges[app.name] = badge
+      }
+
+      guard let badge else {
+        state.acknowledgedBadges.removeValue(forKey: app.name)
+        continue
+      }
+
+      if let acked = state.acknowledgedBadges[app.name] {
+        if shouldSuppress(current: badge, acknowledged: acked) {
+          continue
+        } else {
+          state.acknowledgedBadges.removeValue(forKey: app.name)
+        }
+      }
 
       switch app.effect {
       case .glow:
@@ -77,6 +122,7 @@ class DockPoller {
       }
     }
 
+    state.currentBadges = pollBadges
     state.activeGlowConfigs = configs
     state.activeFloatingDockApps = floatingDockItems
   }
