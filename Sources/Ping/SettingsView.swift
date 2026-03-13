@@ -377,6 +377,16 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case .apps: "app.badge"
     }
   }
+
+  var isEffect: Bool {
+    switch self {
+    case .line, .floatingDock: true
+    default: false
+    }
+  }
+
+  static var nonEffects: [SettingsTab] { allCases.filter { !$0.isEffect } }
+  static var effects: [SettingsTab] { allCases.filter { $0.isEffect } }
 }
 
 @available(macOS 26, *)
@@ -781,9 +791,17 @@ struct SettingsView: View {
 
   var body: some View {
     NavigationSplitView {
-      List(SettingsTab.allCases, selection: $selectedTab) { tab in
-        Label(tab.label, systemImage: tab.icon)
-          .tag(tab)
+      List(selection: $selectedTab) {
+        ForEach(SettingsTab.nonEffects) { tab in
+          Label(tab.label, systemImage: tab.icon)
+            .tag(tab)
+        }
+        Section("Effects") {
+          ForEach(SettingsTab.effects) { tab in
+            Label(tab.label, systemImage: tab.icon)
+              .tag(tab)
+          }
+        }
       }
       .navigationSplitViewColumnWidth(min: 180, ideal: 180, max: 180)
       .navigationTitle("Settings")
