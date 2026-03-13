@@ -221,7 +221,7 @@ class AppState {
   }
 
   var launchOnStartup = false
-  var refreshInterval = 1.0
+  var refreshInterval = 0.5
   var apps: [AppSettings] = []
   var dockAppNames: [String] = []
   var appIcons: [String: NSImage] = [:]

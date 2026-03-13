@@ -354,18 +354,18 @@ struct AppCardView: View {
 @available(macOS 26, *)
 enum SettingsTab: String, CaseIterable, Identifiable {
   case general
+  case apps
   case line
   case floatingDock
-  case apps
 
   var id: String { rawValue }
 
   var label: String {
     switch self {
     case .general: "General"
+    case .apps: "Apps"
     case .line: "Line"
     case .floatingDock: "Floating Dock"
-    case .apps: "Apps"
     }
   }
 
@@ -435,7 +435,7 @@ struct GeneralSettingsView: View {
             }
           }
           .padding(.horizontal, 12)
-          .padding(.vertical, 8)
+          .padding(.vertical, 16)
 
           Divider().padding(.leading, 12)
 
@@ -446,7 +446,7 @@ struct GeneralSettingsView: View {
                   format: "Dock polling interval (%.1f sec)",
                   state.refreshInterval)
               )
-              Slider(value: $state.refreshInterval, in: 0.1...5, step: 0.1)
+              Slider(value: $state.refreshInterval, in: 0.1...2, step: 0.1)
                 .labelsHidden()
             }
             Text(
@@ -456,7 +456,7 @@ struct GeneralSettingsView: View {
             .foregroundStyle(.tertiary)
           }
           .padding(.horizontal, 12)
-          .padding(.vertical, 8)
+          .padding(.vertical, 16)
         }
       }
       .padding(20)
@@ -471,6 +471,17 @@ struct FloatingDockSettingsView: View {
   var body: some View {
     @Bindable var state = state
     ScrollView {
+      VStack(alignment: .leading, spacing: 2) {
+        Text("Floating Dock")
+          .font(.title2.bold())
+        Text("Customize the look and position of the 'Floating Dock' effect")
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal)
+      .padding(.top, 12)
+
       SettingsSection {
         // Position
         HStack {
@@ -602,6 +613,17 @@ struct LineSettingsView: View {
   var body: some View {
     @Bindable var state = state
     ScrollView {
+      VStack(alignment: .leading, spacing: 2) {
+        Text("Line")
+          .font(.title2.bold())
+        Text("Customize the look and position of the 'Line' effect")
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal)
+      .padding(.top, 12)
+
       SettingsSection {
         // Position
         HStack {
@@ -660,6 +682,17 @@ struct AppsSettingsView: View {
   var body: some View {
     @Bindable var state = state
     VStack(spacing: 0) {
+      VStack(alignment: .leading, spacing: 2) {
+        Text("Apps")
+          .font(.title2.bold())
+        Text("Configure what effect is shown when an app has a badge in the dock")
+          .font(.subheadline)
+          .foregroundStyle(.secondary)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding(.horizontal)
+      .padding(.top, 12)
+
       // Apps section header
       HStack {
         Spacer()
