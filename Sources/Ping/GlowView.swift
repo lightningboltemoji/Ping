@@ -141,12 +141,14 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
 
   private func applyConfig(_ config: GlowConfig) {
     opacityMultiplier = Float(config.opacity)
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
     glowLayer.colors = gradientColors(for: config.color)
     glowLayer.locations = [0.0, 0.85, 1.0]
-    // glowLayer.locations = [0.7, 0.7, 0.7]
     let (start, end) = gradientPoints(for: position, size: config.size)
     glowLayer.startPoint = start
     glowLayer.endPoint = end
+    CATransaction.commit()
   }
 
   // MARK: - Setup
@@ -172,8 +174,6 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
     phase = .fadeIn
     glowLayer?.removeAllAnimations()
 
-    glowLayer.opacity = maxOpacity
-
     let anim = CABasicAnimation(keyPath: "opacity")
     anim.fromValue = entering ? 0 : minOpacity
     anim.toValue = maxOpacity
@@ -181,13 +181,15 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
     anim.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
     anim.delegate = self
 
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    glowLayer.opacity = maxOpacity
     glowLayer?.add(anim, forKey: "glowAnimation")
+    CATransaction.commit()
   }
 
   private func startFadeOut() {
     phase = .fadeOut
-
-    glowLayer.opacity = minOpacity
 
     let anim = CABasicAnimation(keyPath: "opacity")
     anim.fromValue = maxOpacity
@@ -196,17 +198,24 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
     anim.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
     anim.delegate = self
 
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    glowLayer.opacity = minOpacity
     glowLayer?.add(anim, forKey: "glowAnimation")
+    CATransaction.commit()
   }
 
   private func startCrossfade(to config: GlowConfig) {
     phase = .crossfade
     let oldColors = glowLayer.colors
     let oldEndPoint = glowLayer.endPoint
+    let oldMinOpacity = minOpacity
     displayedConfig = config
     let newColors = gradientColors(for: config.color)
 
     applyConfig(config)
+
+    let newMinOpacity = minOpacity
 
     let colorsAnim = CABasicAnimation(keyPath: "colors")
     colorsAnim.fromValue = oldColors
@@ -216,13 +225,21 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
     endPointAnim.fromValue = oldEndPoint
     endPointAnim.toValue = glowLayer.endPoint
 
+    let opacityAnim = CABasicAnimation(keyPath: "opacity")
+    opacityAnim.fromValue = oldMinOpacity
+    opacityAnim.toValue = newMinOpacity
+
     let group = CAAnimationGroup()
-    group.animations = [colorsAnim, endPointAnim]
+    group.animations = [colorsAnim, endPointAnim, opacityAnim]
     group.duration = crossfadeDuration
     group.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
     group.delegate = self
 
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    glowLayer.opacity = newMinOpacity
     glowLayer.add(group, forKey: "glowAnimation")
+    CATransaction.commit()
   }
 
   private func accelerateTransitionAway() {
@@ -236,7 +253,6 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
       0.15, Double(currentOpacity / maxOpacity) * fadeDuration * 0.5)
 
     phase = .fadeOut
-    glowLayer.opacity = minOpacity
 
     let anim = CABasicAnimation(keyPath: "opacity")
     anim.fromValue = currentOpacity
@@ -245,7 +261,11 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
     anim.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
     anim.delegate = self
 
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    glowLayer.opacity = minOpacity
     glowLayer.add(anim, forKey: "glowAnimation")
+    CATransaction.commit()
   }
 
   func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
