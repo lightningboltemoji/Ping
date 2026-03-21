@@ -48,7 +48,9 @@ class GlowView: NSView, @preconcurrency CAAnimationDelegate {
 
   override func awakeFromNib() {
     super.awakeFromNib()
-    setupGlowEffect()
+    MainActor.assumeIsolated {
+      setupGlowEffect()
+    }
   }
 
   // MARK: - Public API

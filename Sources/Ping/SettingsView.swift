@@ -320,7 +320,7 @@ struct AppCardView: View {
 
         let currentAppearance: Binding<GlowAppearance> =
           app.glowSettings.settingsMode == .advanced
-          && advancedTab == .nonNumeric
+            && advancedTab == .nonNumeric
           ? $app.glowSettings.nonNumeric
           : $app.glowSettings.normal
 
